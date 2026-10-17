@@ -1,0 +1,25 @@
+# Despliegue de la API en Render (plan gratuito). NO VERIFICADO en un despliegue real (ver PROCESO.md, Fase 0).
+# El navegador nunca llama a esta URL directamente: Vercel reenvía /api (apps/web/vercel.json).
+services:
+  - type: web
+    name: sismora-api
+    runtime: python
+    plan: free
+    rootDir: services/api
+    buildCommand: pip install -r requirements.txt
+    # Las migraciones corren al arrancar; --proxy-headers para leer la IP real detrás del proxy de Render
+    startCommand: alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.7
+      - key: ENVIRONMENT
+        value: production
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false # se pega la URL de PostgreSQL (Render o Supabase)
+      - key: CORS_ORIGINS
+        sync: false # https://<tu-proyecto>.vercel.app
